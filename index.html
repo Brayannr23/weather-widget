@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <!--
+      SECURITY FIX — Finding 5: Content Security Policy
+      A CSP header restricts what resources the browser is allowed to load and where
+      the page can send data. Without it, any XSS that slips through has unrestricted
+      network access. This is the client-side equivalent of ALLOWED_HOSTS + HTTPS
+      settings in Django.
+
+      Directives used:
+        default-src 'none'          — block everything unless explicitly allowed
+        script-src  'self'          — only run scripts from our own origin
+        style-src   'self' https://fonts.googleapis.com  — our CSS + Google Fonts CSS
+        font-src    https://fonts.gstatic.com            — Google Fonts font files
+        connect-src https://geocoding-api.open-meteo.com https://api.open-meteo.com
+                                    — only allow fetch() to the two APIs we use
+        img-src     'self' data:    — allow our own images and inline data URIs
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'none';
+        script-src  'self';
+        style-src   'self' https://fonts.googleapis.com;
+        font-src    https://fonts.gstatic.com;
+        connect-src https://geocoding-api.open-meteo.com https://api.open-meteo.com;
+        img-src     'self' data:;
+      "
+    />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SkyPulse — Weather Widget</title>
+
+    <!--
+      SECURITY NOTE — Finding 4: Subresource Integrity
+      Google Fonts serves dynamically generated CSS, so a fixed SRI hash cannot be
+      pre-computed. The crossorigin="anonymous" attribute is still required: it tells
+      the browser to send a CORS request, which prevents the CDN response from leaking
+      our cookies. For any STATIC third-party asset (e.g. a pinned CDN library) you
+      should always add integrity="sha384-…" as well.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="anonymous" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Source+Serif+4:ital,wght@0,300;1,300&display=swap"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+
+    <!-- Our styles -->
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+
+    <!-- ── BACKGROUND BLOBS (purely decorative) ── -->
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="bg-blob blob-3"></div>
+
+    <!-- ── MAIN CARD ── -->
+    <main class="card" id="app">
+
+      <!-- Header -->
+      <header class="card__header">
+        <span class="brand">☁ SkyPulse</span>
+        <p class="tagline">Live weather, anywhere on Earth</p>
+      </header>
+
+      <!-- Search bar: interactive element #1 -->
+      <section class="search-section">
+        <div class="search-row">
+          <input
+            type="text"
+            id="city-input"
+            class="search-input"
+            placeholder="Type a city name…"
+            aria-label="City name"
+            maxlength="100"
+          />
+          <!-- Button: interactive element #2 -->
+          <button id="search-btn" class="search-btn" aria-label="Search">
+            Search
+          </button>
+        </div>
+        <!-- Error message shown only when something goes wrong -->
+        <p id="error-msg" class="error-msg hidden" role="alert"></p>
+      </section>
+
+      <!-- Loading spinner (hidden by default, shown while fetching) -->
+      <div id="loader" class="loader hidden" aria-live="polite">
+        <div class="spinner"></div>
+        <span>Fetching weather…</span>
+      </div>
+
+      <!-- Weather result panel (hidden until we have data) -->
+      <section id="weather-panel" class="weather-panel hidden">
+
+        <!-- City name + country -->
+        <div class="city-row">
+          <h1 id="city-name" class="city-name"></h1>
+          <span id="country-badge" class="country-badge"></span>
+        </div>
+
+        <!-- Big temperature display -->
+        <div class="temp-hero">
+          <span id="weather-icon" class="weather-icon"></span>
+          <span id="temperature" class="temperature"></span>
+          <div class="unit-toggle-group">
+            <!-- Toggle °C / °F: interactive element #3 -->
+            <button id="toggle-unit" class="unit-btn" title="Switch units">°F</button>
+          </div>
+        </div>
+
+        <!-- Condition text -->
+        <p id="condition-text" class="condition-text"></p>
+
+        <!-- Detail grid -->
+        <div class="detail-grid">
+          <div class="detail-card">
+            <span class="detail-icon">💧</span>
+            <span class="detail-label">Humidity</span>
+            <span id="humidity" class="detail-value"></span>
+          </div>
+          <div class="detail-card">
+            <span class="detail-icon">🌬️</span>
+            <span class="detail-label">Wind</span>
+            <span id="wind" class="detail-value"></span>
+          </div>
+          <div class="detail-card">
+            <span class="detail-icon">🌡️</span>
+            <span class="detail-label">Feels Like</span>
+            <span id="feels-like" class="detail-value"></span>
+          </div>
+          <div class="detail-card">
+            <span class="detail-icon">👁️</span>
+            <span class="detail-label">Visibility</span>
+            <span id="visibility" class="detail-value"></span>
+          </div>
+        </div>
+
+        <!-- Last updated timestamp -->
+        <p id="updated-at" class="updated-at"></p>
+
+      </section>
+
+    </main>
+
+    <!-- Script linked just before closing body tag -->
+    <script src="script.js"></script>
+  </body>
+</html>
